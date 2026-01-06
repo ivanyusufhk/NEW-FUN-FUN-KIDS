@@ -1,35 +1,19 @@
-@ -0,0 +1,725 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#88CCF7">
-    <title>Fun Fun Kids</title>
-<<<<<<< HEAD
-
-    <!-- 1. Konfigurasi PWA dan Tampilan -->
-    <meta name="theme-color" content="#c7f1dc">
-    <meta name="description" content="Aplikasi belajar membaca dan berhitung untuk anak.">
-    <!-- Link Manifest akan disuntikkan oleh JavaScript -->
-    <link rel="manifest" href="">
-    <!-- Ikon Apple -->
-    <link rel="apple-touch-icon" href="https://placehold.co/192x192/c7f1dc/553f32?text=FFK">
-<link rel="icon" href="icons/logo1 192.png">
-    <!-- 2. Bootstrap 5.3 CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-
-    <!-- 3. Google Fonts (Tampilan Ramah Anak) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
-
-    <!-- 4. CSS Kustom -->
-=======
+    <meta name="description" content="Aplikasi pembelajaran interaktif untuk anak-anak: belajar membaca huruf A-Z dan berhitung 1-20 dengan cara yang menyenangkan">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Fun Fun Kids - Belajar Membaca & Berhitung</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="manifest" href="#" id="manifest-placeholder">
->>>>>>> 326f808fcbe266e68680202ced6930f5cc970781
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icons/icon-192x192-A.png">
+    <link rel="apple-touch-icon" href="icons/icon-192x192-A.png">
+    
     <style>
         * {
             margin: 0;
@@ -176,8 +160,9 @@
             background: white;
             border-radius: 20px;
             padding: 20px;
-            margin: 20px;
+            margin: 20px auto;
             box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+            max-width: 640px;
         }
 
         #drawCanvas {
@@ -185,6 +170,9 @@
             border-radius: 15px;
             cursor: crosshair;
             touch-action: none;
+            display: block;
+            margin: 0 auto;
+            background: white;
         }
 
         .controls {
@@ -237,6 +225,7 @@
             border-radius: 30px;
             text-align: center;
             animation: popIn 0.5s;
+            max-width: 90%;
         }
 
         @keyframes popIn {
@@ -277,7 +266,7 @@
 
         .number-display {
             text-align: center;
-            padding: 40px;
+            padding: 40px 20px;
         }
 
         .big-number {
@@ -298,7 +287,8 @@
             flex-wrap: wrap;
             justify-content: center;
             gap: 20px;
-            margin: 30px 0;
+            margin: 30px auto;
+            max-width: 800px;
         }
 
         .object-item {
@@ -319,6 +309,57 @@
             display: block;
         }
 
+        /* Install prompt styling */
+        .install-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: none;
+            align-items: center;
+            gap: 15px;
+            z-index: 1000;
+            animation: slideUp 0.5s;
+            max-width: 90%;
+        }
+
+        @keyframes slideUp {
+            from { transform: translate(-50%, 100px); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+
+        .install-prompt.show {
+            display: flex;
+        }
+
+        .install-btn {
+            background: #88CCF7;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .install-btn:hover {
+            background: #5FB3F5;
+            transform: scale(1.05);
+        }
+
+        .close-prompt {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 1.5rem;
@@ -337,6 +378,27 @@
 
             .letter-btn, .number-btn {
                 font-size: 2rem;
+            }
+
+            .big-number {
+                font-size: 6rem;
+            }
+
+            .animation-letter {
+                font-size: 5rem;
+            }
+
+            .animation-word {
+                font-size: 1.8rem;
+            }
+
+            .object-item {
+                font-size: 2rem;
+            }
+
+            .canvas-container {
+                padding: 15px;
+                margin: 10px;
             }
         }
     </style>
@@ -383,7 +445,7 @@
             </div>
             <div class="main-content">
                 <div class="canvas-container">
-                    <canvas id="drawCanvas" width="600" height="400"></canvas>
+                    <canvas id="drawCanvas"></canvas>
                     <div class="controls">
                         <button class="control-btn clear" onclick="clearCanvas()">🗑️ Hapus</button>
                         <button class="control-btn next" onclick="finishDrawing()">✅ Selesai</button>
@@ -428,10 +490,17 @@
         </div>
     </div>
 
+    <!-- Install Prompt -->
+    <div class="install-prompt" id="installPrompt">
+        <span>📱 Install aplikasi untuk pengalaman lebih baik!</span>
+        <button class="install-btn" id="installBtn">Install</button>
+        <button class="close-prompt" onclick="closeInstallPrompt()">×</button>
+    </div>
+
     <script>
         // Alphabet data with examples
         const alphabetData = {
-            'A': { word: 'Apel', emoji: '🍏' },
+            'A': { word: 'Apel', emoji: '🍎' },
             'B': { word: 'Bola', emoji: '⚽' },
             'C': { word: 'Ceri', emoji: '🍒' },
             'D': { word: 'Drum', emoji: '🥁' },
@@ -451,7 +520,7 @@
             'R': { word: 'Roket', emoji: '🚀' },
             'S': { word: 'Sapi', emoji: '🐮' },
             'T': { word: 'Topi', emoji: '🎩' },
-            'U': { word: 'Udang', emoji: '🦐' },
+            'U': { word: 'Udang', emoji: '🦞' },
             'V': { word: 'Video', emoji: '📹' },
             'W': { word: 'Wow', emoji: '😮' },
             'X': { word: 'Xylophone', emoji: '🎹' },
@@ -464,6 +533,9 @@
         let currentLetter = '';
         let canvas, ctx;
         let isDrawing = false;
+        let deferredPrompt;
+        let lastX = 0;
+        let lastY = 0;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -471,74 +543,151 @@
             generateLetterGrid();
             generateNumberGrid();
             registerServiceWorker();
+            checkShortcut();
         });
 
         function initCanvas() {
             canvas = document.getElementById('drawCanvas');
+            if (!canvas) return;
+            
             ctx = canvas.getContext('2d');
             
-            // Make canvas responsive
+            // Set initial canvas size
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
 
-            // Drawing events
+            // Mouse events
             canvas.addEventListener('mousedown', startDrawing);
             canvas.addEventListener('mousemove', draw);
             canvas.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('mouseout', stopDrawing);
+            canvas.addEventListener('mouseleave', stopDrawing);
 
             // Touch events
-            canvas.addEventListener('touchstart', handleTouch);
-            canvas.addEventListener('touchmove', handleTouch);
+            canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+            canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
             canvas.addEventListener('touchend', stopDrawing);
+            canvas.addEventListener('touchcancel', stopDrawing);
 
+            // Set drawing style
             ctx.lineWidth = 8;
             ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
             ctx.strokeStyle = '#88CCF7';
         }
 
         function resizeCanvas() {
+            if (!canvas) return;
+            
             const container = canvas.parentElement;
-            const width = Math.min(600, container.clientWidth - 40);
-            canvas.width = width;
-            canvas.height = width * 0.67;
+            const maxWidth = Math.min(600, container.clientWidth - 40);
+            const newWidth = maxWidth;
+            const newHeight = Math.floor(newWidth * 0.67);
+            
+            // Only resize if dimensions changed
+            if (canvas.width !== newWidth || canvas.height !== newHeight) {
+                // Save current drawing
+                const imageData = canvas.width > 0 ? ctx.getImageData(0, 0, canvas.width, canvas.height) : null;
+                
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+                
+                // Restore drawing settings
+                ctx.lineWidth = 8;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.strokeStyle = '#88CCF7';
+                
+                // Restore drawing if exists
+                if (imageData && imageData.width > 0) {
+                    ctx.putImageData(imageData, 0, 0);
+                }
+            }
+        }
+
+        function getCanvasCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: (e.clientX - rect.left) * scaleX,
+                y: (e.clientY - rect.top) * scaleY
+            };
         }
 
         function startDrawing(e) {
             isDrawing = true;
-            const rect = canvas.getBoundingClientRect();
+            const coords = getCanvasCoordinates(e);
+            lastX = coords.x;
+            lastY = coords.y;
             ctx.beginPath();
-            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.moveTo(coords.x, coords.y);
         }
 
         function draw(e) {
             if (!isDrawing) return;
-            const rect = canvas.getBoundingClientRect();
-            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            e.preventDefault();
+            
+            const coords = getCanvasCoordinates(e);
+            ctx.lineTo(coords.x, coords.y);
             ctx.stroke();
+            
+            lastX = coords.x;
+            lastY = coords.y;
         }
 
         function stopDrawing() {
             isDrawing = false;
+            ctx.beginPath();
         }
 
-        function handleTouch(e) {
+        function handleTouchStart(e) {
             e.preventDefault();
-            const touch = e.touches[0];
-            const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 'mousemove', {
-                clientX: touch.clientX,
-                clientY: touch.clientY
-            });
-            canvas.dispatchEvent(mouseEvent);
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                
+                isDrawing = true;
+                lastX = (touch.clientX - rect.left) * scaleX;
+                lastY = (touch.clientY - rect.top) * scaleY;
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+            }
+        }
+
+        function handleTouchMove(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                
+                const x = (touch.clientX - rect.left) * scaleX;
+                const y = (touch.clientY - rect.top) * scaleY;
+                
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                
+                lastX = x;
+                lastY = y;
+            }
         }
 
         function clearCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            playSound('clear');
+            if (ctx && canvas) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                playSound('clear');
+            }
         }
 
         function generateLetterGrid() {
             const grid = document.getElementById('letterGrid');
+            if (!grid) return;
+            
             for (let i = 65; i <= 90; i++) {
                 const letter = String.fromCharCode(i);
                 const btn = document.createElement('button');
@@ -551,6 +700,8 @@
 
         function generateNumberGrid() {
             const grid = document.getElementById('numberGrid');
+            if (!grid) return;
+            
             for (let i = 1; i <= 20; i++) {
                 const btn = document.createElement('button');
                 btn.className = 'number-btn';
@@ -562,7 +713,8 @@
 
         function selectLetter(letter) {
             currentLetter = letter;
-            document.getElementById('drawingTitle').textContent = `Tulis Huruf ${letter}`;
+            const title = document.getElementById('drawingTitle');
+            if (title) title.textContent = `Tulis Huruf ${letter}`;
             clearCanvas();
             showScreen('drawingScreen');
             playSound('select');
@@ -575,24 +727,32 @@
 
         function showAnimation(letter) {
             const data = alphabetData[letter];
-            document.getElementById('animLetter').textContent = letter;
-            document.getElementById('animWord').textContent = `${letter} untuk ${data.word}`;
-            document.getElementById('animImage').textContent = data.emoji;
+            if (!data) return;
             
+            const animLetter = document.getElementById('animLetter');
+            const animWord = document.getElementById('animWord');
+            const animImage = document.getElementById('animImage');
             const overlay = document.getElementById('animationOverlay');
-            overlay.style.display = 'flex';
+            
+            if (animLetter) animLetter.textContent = letter;
+            if (animWord) animWord.textContent = `${letter} untuk ${data.word}`;
+            if (animImage) animImage.textContent = data.emoji;
+            
+            if (overlay) overlay.style.display = 'flex';
             
             speakLetter(letter, data.word);
             
             setTimeout(() => {
-                overlay.style.display = 'none';
+                if (overlay) overlay.style.display = 'none';
             }, 3000);
         }
 
         function selectNumber(num) {
-            document.getElementById('bigNumber').textContent = num;
+            const bigNumber = document.getElementById('bigNumber');
             const container = document.getElementById('objectContainer');
-            container.innerHTML = '';
+            
+            if (bigNumber) bigNumber.textContent = num;
+            if (container) container.innerHTML = '';
             
             const emoji = numberEmojis[num % numberEmojis.length];
             
@@ -601,7 +761,7 @@
                     const item = document.createElement('div');
                     item.className = 'object-item';
                     item.textContent = emoji;
-                    container.appendChild(item);
+                    if (container) container.appendChild(item);
                     playSound('pop');
                 }, i * 200);
             }
@@ -611,65 +771,77 @@
         }
 
         function speakLetter(letter, word) {
-            if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(`${letter} untuk ${word}`);
-                utterance.lang = 'id-ID';
-                utterance.rate = 0.8;
-                speechSynthesis.speak(utterance);
+            try {
+                if ('speechSynthesis' in window) {
+                    speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(`${letter} untuk ${word}`);
+                    utterance.lang = 'id-ID';
+                    utterance.rate = 0.8;
+                    speechSynthesis.speak(utterance);
+                }
+            } catch (error) {
+                console.log('Speech synthesis error:', error);
             }
         }
 
         function speakNumber(num) {
-            if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(`Angka ${num}`);
-                utterance.lang = 'id-ID';
-                utterance.rate = 0.8;
-                speechSynthesis.speak(utterance);
+            try {
+                if ('speechSynthesis' in window) {
+                    speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(`Angka ${num}`);
+                    utterance.lang = 'id-ID';
+                    utterance.rate = 0.8;
+                    speechSynthesis.speak(utterance);
+                }
+            } catch (error) {
+                console.log('Speech synthesis error:', error);
             }
         }
 
         function playSound(type) {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            if (type === 'success') {
-                oscillator.frequency.value = 523.25;
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                const audioContext = new AudioContext();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                const soundSettings = {
+                    'success': { freq: 523.25, duration: 0.5, gain: 0.3 },
+                    'select': { freq: 440, duration: 0.2, gain: 0.2 },
+                    'pop': { freq: 800, duration: 0.1, gain: 0.1 },
+                    'clear': { freq: 200, duration: 0.3, gain: 0.2 }
+                };
+                
+                const settings = soundSettings[type] || soundSettings.select;
+                
+                oscillator.frequency.value = settings.freq;
+                gainNode.gain.setValueAtTime(settings.gain, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + settings.duration);
                 oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.5);
-            } else if (type === 'select') {
-                oscillator.frequency.value = 440;
-                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.2);
-            } else if (type === 'pop') {
-                oscillator.frequency.value = 800;
-                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.1);
-            } else if (type === 'clear') {
-                oscillator.frequency.value = 200;
-                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.3);
+                oscillator.stop(audioContext.currentTime + settings.duration);
+            } catch (error) {
+                console.log('Audio error:', error);
             }
         }
 
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
+            const screen = document.getElementById(screenId);
+            if (screen) {
+                screen.classList.add('active');
+                // Resize canvas when showing drawing screen
+                if (screenId === 'drawingScreen') {
+                    setTimeout(resizeCanvas, 100);
+                }
+            }
         }
 
         function goHome() {
             showScreen('homeScreen');
+            if ('speechSynthesis' in window) speechSynthesis.cancel();
         }
 
         function goToReading() {
@@ -690,59 +862,60 @@
             showScreen('countingScreen');
         }
 
-        // Service Worker Registration
+        function checkShortcut() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const mode = params.get('mode');
+                if (mode === 'reading') {
+                    goToReading();
+                } else if (mode === 'counting') {
+                    goToCounting();
+                }
+            } catch (error) {
+                console.log('URL params error:', error);
+            }
+        }
+
         function registerServiceWorker() {
             if ('serviceWorker' in navigator) {
-                const swCode = `
-                    self.addEventListener('install', (e) => {
-                        e.waitUntil(
-                            caches.open('fun-fun-kids-v1').then((cache) => {
-                                return cache.addAll(['/']);
-                            })
-                        );
-                    });
-
-                    self.addEventListener('fetch', (e) => {
-                        e.respondWith(
-                            caches.match(e.request).then((response) => {
-                                return response || fetch(e.request);
-                            })
-                        );
-                    });
-                `;
-                
-                const blob = new Blob([swCode], { type: 'application/javascript' });
-                const swUrl = URL.createObjectURL(blob);
-                
-                navigator.serviceWorker.register(swUrl).then(() => {
-                    console.log('Service Worker registered');
-                }).catch((error) => {
-                    console.log('Service Worker registration failed:', error);
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('service-worker.js')
+                        .then(registration => {
+                            console.log('✅ Service Worker registered:', registration.scope);
+                        })
+                        .catch(error => {
+                            console.log('❌ Service Worker registration failed:', error);
+                        });
                 });
             }
-
-            // Create manifest
-            const manifestData = {
-                name: 'Fun Fun Kids',
-                short_name: 'FunKids',
-                description: 'Aplikasi Pembelajaran untuk Anak',
-                start_url: '/',
-                display: 'fullscreen',
-                background_color: '#88CCF7',
-                theme_color: '#88CCF7',
-                icons: [
-                    {
-                        src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%2388CCF7" width="100" height="100"/><text y="75" x="50" text-anchor="middle" font-size="60">📚</text></svg>',
-                        sizes: '192x192',
-                        type: 'image/svg+xml'
-                    }
-                ]
-            };
-
-            const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
-            const manifestUrl = URL.createObjectURL(manifestBlob);
-            document.getElementById('manifest-placeholder').setAttribute('href', manifestUrl);
         }
+
+        // PWA Install Prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installPrompt').classList.add('show');
+        });
+
+        document.getElementById('installBtn').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response: ${outcome}`);
+                deferredPrompt = null;
+                closeInstallPrompt();
+            }
+        });
+
+        function closeInstallPrompt() {
+            document.getElementById('installPrompt').classList.remove('show');
+        }
+
+        // Track installation
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA berhasil diinstall!');
+            closeInstallPrompt();
+        });
     </script>
 </body>
 </html>
